@@ -22,7 +22,6 @@ ghc-options:
 
 dependencies:
   - base >= 4.7 && < 5
-  - aeson >= 1.1 && < 1.4
   - attoparsec >= 0.13 && < 0.14
   - bytestring
   - streaming >= 0.1.4.5 && < 0.3
