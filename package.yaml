@@ -1,0 +1,33 @@
+name:                streaming-attoparsec
+version:             0.1.0.0
+synopsis:            Attoparsec integration for the streaming ecosystem
+description:         Attoparsec integration for the streaming ecosystem.
+homepage:            https://github.com/haskell-streaming/streaming-attoparsec
+license:             BSD3
+author:              Michael Thompson
+maintainer:          Colin Woodbury, colingw@gmail.com
+category:            Streaming
+
+extra-source-files:
+  - README.md
+  - CHANGELOG.md
+
+ghc-options:
+  - -fwarn-unused-imports
+  - -fwarn-unused-binds
+  - -fwarn-name-shadowing
+  - -fwarn-unused-matches
+  - -fwarn-incomplete-patterns
+  - -fwarn-incomplete-uni-patterns
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson >= 1.1 && < 1.4
+  - attoparsec >= 0.13 && < 0.14
+  - bytestring
+  - streaming >= 0.1.4.5 && < 0.3
+  - streaming-bytestring >= 0.1.4.0 && < 0.2
+
+library:
+  source-dirs: .
+  other-modules: []
