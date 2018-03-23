@@ -57,9 +57,10 @@ import           Streaming.Internal (Stream (..))
 
 ---
 
+-- | Output from parsing errors.
 type Message = ([String], String)
 
-{- | The result of a parse (@Either a ([String], String)@), with the unconsumed byte stream.
+{- | The result of a parse (@Either ([String], String) a@), with the unconsumed byte stream.
 
 >>> :set -XOverloadedStrings  -- the string literal below is a streaming bytestring
 >>> (r,rest1) <- AS.parse (A.scientific <* A.many' A.space) "12.3  4.56  78.3"
@@ -74,18 +75,8 @@ Left 78.3
 >>> Q.putStrLn rest3
 
 -}
-parse :: Monad m
-      => A.Parser a
-      -> ByteString m x -> m (Either a Message, ByteString m x)
-parse parser bs = do
-  (e,rest) <- apply parser bs
-  return (either Right Left e, rest)
-{-#INLINE parse #-}
-
-apply :: Monad m
-        => A.Parser a
-        -> ByteString m x -> m (Either Message a, ByteString m x)
-apply parser = begin
+parse :: Monad m => A.Parser a -> ByteString m x -> m (Either Message a, ByteString m x)
+parse parser = begin
   where begin p0 = case p0 of
           Go m        -> m >>= begin
           Empty r     -> step id (A.parse parser mempty) (return r)
@@ -102,16 +93,15 @@ apply parser = begin
                   Chunk bs p1 | B.null bs -> clean p1
                               | otherwise -> step (diff . (chunk bs >>)) (k bs) p1
             clean p0
-{-#INLINABLE apply #-}
+{-# INLINABLE parse #-}
 
 {-| Apply a parser repeatedly to a stream of bytes, streaming the parsed values, but
-    ending when the parser fails.or the bytes run out.
+    ending when the parser fails or the bytes run out.
 
 >>> S.print $ AS.parsed (A.scientific <* A.many' A.space) $ "12.3  4.56  78.9"
 12.3
 4.56
 78.9
-18.282
 -}
 parsed
   :: Monad m
