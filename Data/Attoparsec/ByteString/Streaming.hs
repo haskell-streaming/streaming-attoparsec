@@ -1,7 +1,7 @@
 {- | Here is a simple use of 'parsed' and standard @Streaming@ segmentation devices to
      parse a file in which groups of numbers are separated by blank lines. Such a problem
      of \'nesting streams\' is described in the @conduit@ context in
-     <http://stackoverflow.com/questions/32957258/how-to-model-nested-streams-with-conduits/32961296 this StackOverflow question>
+     <http://stackoverflow.com/questions/32957258/how-to-model-nested-streams-with-conduits/32961296 this StackOverflow question>.
 
 > -- $ cat nums.txt
 > -- 1
@@ -21,11 +21,12 @@
 > import qualified Streaming.Prelude as S
 > import qualified Data.ByteString.Streaming.Char8 as Q
 > import qualified Data.Attoparsec.ByteString.Char8 as A
-> import qualified Data.Attoparsec.ByteString.Streaming as A
+> import qualified Data.Attoparsec.ByteString.Streaming as AS
 > import Data.Function ((&))
 >
+> main :: IO ()
 > main = Q.getContents           -- raw bytes
->        & A.parsed lineParser   -- stream of parsed `Maybe Int`s; blank lines are `Nothing`
+>        & AS.parsed lineParser  -- stream of parsed `Maybe Int`s; blank lines are `Nothing`
 >        & void                  -- drop any unparsed nonsense at the end
 >        & S.split Nothing       -- split on blank lines
 >        & S.maps S.concat       -- keep `Just x` values in the sub-streams (cp. catMaybes)
@@ -41,11 +42,7 @@
 
 -}
 
-module Data.Attoparsec.ByteString.Streaming
-    (Message
-    , parse
-    , parsed
-    ) where
+module Data.Attoparsec.ByteString.Streaming where
 
 import qualified Data.Attoparsec.ByteString as A
 import qualified Data.Attoparsec.Internal.Types as T
@@ -58,7 +55,7 @@ import           Streaming.Internal (Stream (..))
 ---
 
 -- | Output from parsing errors.
-type Message = ([String], String)
+type Errors = ([String], String)
 
 {- | The result of a parse (@Either ([String], String) a@), with the unconsumed byte stream.
 
@@ -73,9 +70,9 @@ Left 4.56
 >>> print t
 Left 78.3
 >>> Q.putStrLn rest3
-
+   -- Nothing left, this prints an empty string.
 -}
-parse :: Monad m => A.Parser a -> ByteString m x -> m (Either Message a, ByteString m x)
+parse :: Monad m => A.Parser a -> ByteString m x -> m (Either Errors a, ByteString m x)
 parse parser = begin
   where begin p0 = case p0 of
           Go m        -> m >>= begin
@@ -98,7 +95,7 @@ parse parser = begin
 {-| Apply a parser repeatedly to a stream of bytes, streaming the parsed values, but
     ending when the parser fails or the bytes run out.
 
->>> S.print $ AS.parsed (A.scientific <* A.many' A.space) $ "12.3  4.56  78.9"
+>>> S.print . void $ AS.parsed (A.scientific <* A.many' A.space) "12.3  4.56  78.9"
 12.3
 4.56
 78.9
@@ -107,7 +104,7 @@ parsed
   :: Monad m
   => A.Parser a     -- ^ Attoparsec parser
   -> ByteString m r -- ^ Raw input
-  -> Stream (Of a) m (Either (Message, ByteString m r) r)
+  -> Stream (Of a) m (Either (Errors, ByteString m r) r)
 parsed parser = begin
   where begin p0 = case p0 of  -- inspect for null chunks before
           Go m        -> lift m >>= begin -- feeding attoparsec
