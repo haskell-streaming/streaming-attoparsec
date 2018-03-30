@@ -1,5 +1,5 @@
 name:                streaming-attoparsec
-version:             0.1.0.0
+version:             1.0.0
 synopsis:            Attoparsec integration for the streaming ecosystem
 description:         Attoparsec integration for the streaming ecosystem.
 homepage:            https://github.com/haskell-streaming/streaming-attoparsec
