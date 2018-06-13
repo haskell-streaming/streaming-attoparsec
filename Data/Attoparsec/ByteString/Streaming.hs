@@ -62,13 +62,13 @@ type Errors = ([String], String)
 >>> :set -XOverloadedStrings  -- the string literal below is a streaming bytestring
 >>> (r,rest1) <- AS.parse (A.scientific <* A.many' A.space) "12.3  4.56  78.3"
 >>> print r
-Left 12.3
+Right 12.3
 >>> (s,rest2) <- AS.parse (A.scientific <* A.many' A.space) rest1
 >>> print s
-Left 4.56
+Right 4.56
 >>> (t,rest3) <- AS.parse (A.scientific <* A.many' A.space) rest2
 >>> print t
-Left 78.3
+Right 78.3
 >>> Q.putStrLn rest3
    -- Nothing left, this prints an empty string.
 -}
