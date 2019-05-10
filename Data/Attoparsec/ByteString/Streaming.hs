@@ -1,7 +1,9 @@
-{- | Here is a simple use of 'parsed' and standard @Streaming@ segmentation devices to
-     parse a file in which groups of numbers are separated by blank lines. Such a problem
-     of \'nesting streams\' is described in the @conduit@ context in
-     <http://stackoverflow.com/questions/32957258/how-to-model-nested-streams-with-conduits/32961296 this StackOverflow question>.
+{- |
+
+Here is a simple use of 'parsed' and standard @Streaming@ segmentation devices
+to parse a file in which groups of numbers are separated by blank lines. Such a
+problem of \'nesting streams\' is described in the @conduit@ context in
+<http://stackoverflow.com/questions/32957258/how-to-model-nested-streams-with-conduits/32961296 this StackOverflow question>.
 
 > -- $ cat nums.txt
 > -- 1
@@ -50,7 +52,7 @@ import qualified Data.ByteString as B
 import           Data.ByteString.Streaming
 import           Data.ByteString.Streaming.Internal
 import           Streaming hiding (concats, unfold)
-import           Streaming.Internal (Stream (..))
+import           Streaming.Internal (Stream(..))
 
 ---
 
@@ -76,7 +78,7 @@ parse :: Monad m => A.Parser a -> ByteString m x -> m (Either Errors a, ByteStri
 parse parser = begin
   where begin p0 = case p0 of
           Go m        -> m >>= begin
-          Empty r     -> step id (A.parse parser mempty) (return r)
+          Empty r     -> step id (A.parse parser B.empty) (return r)
           Chunk bs p1 | B.null bs -> begin p1 -- attoparsec understands "" as eof
                       | otherwise -> step (chunk bs >>) (A.parse parser bs) p1
 
@@ -86,14 +88,14 @@ parse parser = begin
           T.Partial k  -> do
             let clean p = case p of  -- inspect for null chunks before
                   Go m        -> m >>= clean  -- feeding attoparsec
-                  Empty r     -> step diff (k mempty) (return r)
+                  Empty r     -> step diff (k B.empty) (return r)
                   Chunk bs p1 | B.null bs -> clean p1
                               | otherwise -> step (diff . (chunk bs >>)) (k bs) p1
             clean p0
 {-# INLINABLE parse #-}
 
-{-| Apply a parser repeatedly to a stream of bytes, streaming the parsed values, but
-    ending when the parser fails or the bytes run out.
+{-| Apply a parser repeatedly to a stream of bytes, streaming the parsed values,
+    but ending when the parser fails or the bytes run out.
 
 >>> S.print . void $ AS.parsed (A.scientific <* A.many' A.space) "12.3  4.56  78.9"
 12.3
@@ -118,7 +120,7 @@ parsed parser = begin
           A.Partial k  -> do
             x <- lift (nextChunk p0)
             case x of
-              Left e -> step diffP (k mempty) (return e)
+              Left e -> step diffP (k B.empty) (return e)
               Right (bs,p1) | B.null bs -> step diffP res p1
                             | otherwise  -> step (diffP . (chunk bs >>)) (k bs) p1
 {-# INLINABLE parsed #-}
